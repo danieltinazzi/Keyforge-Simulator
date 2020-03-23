@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+<title>Keyforge</title>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css">
+<script src="lib/jquery-3.4.1.min.js"></script>
+<script src="lib/socket.io.js"></script>
+
+</head>
+<body>
+
+<div class="container mt-4">
+    <h2>Play KeyForge online!</h2>
+    <div class="card mt-4">
+        <div class="card-header">Create a new game</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="form-group col-12">
+                    <label for="room-name">Room name</label>
+                    <input type="text" class="form-control" id="room-name"
+                        placeholder="Enter a name for your game">
+                </div>
+                <div class="form-group col-6">
+                    <label for="room-key">Password (optional)</label>
+                    <input type="password" class="form-control" id="room-key"
+                        placeholder="Enter a password to restrict the access">
+                </div>
+                <div class="form-group col-6">
+                    <label for="max-players">Maximum number of players</label>
+                    <select class="form-control" id="max-players">
+                        <option>4</option>
+                        <option>3</option>
+                        <option>2</option>
+                    </select>
+                </div>
+                <div class="form-group col-12">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="team-play">
+                        <label class="custom-control-label" for="team-play">Team play</label>
+                    </div>
+                </div>
+                <div class="col">
+                    <button type="submit" class="btn btn-primary create">Create game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-4">
+        <div class="card-header">Join a game</div>
+        <div class="card-body">
+            <div class="row room-list">
+            </div>
+        </div>
+    </div>
+</div>
+
+<template class="no-game-template">
+    <div class="col-6">
+        <p>No game currently available, create one!</p>
+    </div>
+</template>
+
+<template class="room-template">
+    <div class="col-4 mb-2 mt-2">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title room-name"></h5>
+                <p class="card-text">Number of players: <span class="room-size"></span></p>
+                <a class="btn btn-primary join" href="#" role="button">Join game</a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script src="js/lobby.js"></script>
+
+</body>
+</html>
