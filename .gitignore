@@ -1,10 +1,4 @@
+node_modules
 public/img/cards/341/*
 public/img/cards/435/*
 public/img/cards/452/*
-
-node_modules
-build
-npm-debug.log
-.env
-.DS_Store
-
