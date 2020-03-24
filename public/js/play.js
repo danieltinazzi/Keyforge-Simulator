@@ -31,11 +31,11 @@ $(document).ready(() => {
 
         let team = null;
         const teamInput = $("input[name='team']:checked");
-        if (teamInput)
+        
+        if (teamInput.val())
             team = teamInput.val();
 
-        console.log(teamInput);
-        console.log(team);
+        console.log(username);
 
         let deckId = '';
         if (!sealed)
@@ -49,10 +49,17 @@ $(document).ready(() => {
                 $('#content').html(canvasTemplate);
 
                 // Start the canvas
-                startCanvas(data.message.decks, data.message.deckNumbers,
-                    data.message.deckNumber, data.message.allyNumber, data.message.usernames);
+                startCanvas(
+                    data.message.decks,
+                    data.message.deckNumbers,
+                    data.message.deckNumber,
+                    data.message.cardCount,
+                    data.message.allyNumber,
+                    data.message.usernames
+                );
             } else {
                 alert(data.message);
+                $('#start').prop('disabled', false);
             }
         });
     });

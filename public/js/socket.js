@@ -4,10 +4,11 @@ const initSocketEvents = function(socket) {
         console.log('socket disconnected');
     });
 
-    socket.on('newPlayer', function(deck, _deckNumber, isAlly, username) {
+    socket.on('newPlayer', function(deck, _deckNumber, _cardCount, isAlly, username) {
         if (isAlly) {
             allyDeckNumber = _deckNumber;
         }
+        cardCount[deck] = _cardCount;
         addDeck(deck, null, null, _deckNumber, username);
     });
 
@@ -94,7 +95,11 @@ const initSocketEvents = function(socket) {
 
         } else {
             ratioToCoord(message.object, cardScale);
-            
+
+            const deck = message.object.deck;
+            updateCardCount(deck);
+            message.object.deck = null;
+
             if (inOpponentHand(message.object.top, message.object.left))
                 message.object.src = 'img/cards/back.png';
             else

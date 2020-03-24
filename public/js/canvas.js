@@ -2,6 +2,7 @@ let deckNumber;
 let deckNumbers;
 let allyDeckNumber;
 let numberOfPlayers;
+
 let cardSize;
 let cardScale;
 let tokenScale;
@@ -9,9 +10,12 @@ let handHeight;
 let grid;
 let screenRatio;
 
-function startCanvas(decks, deckNums, deckNum, allyDeckNum, usernames) {
+let cardCountTexts;
+let cardCount;
 
-    console.log(usernames);
+function startCanvas(decks, deckNums, deckNum, _cardCount, allyDeckNum, usernames) {
+
+    console.log(_cardCount);
     numberOfPlayers = 0;
     cardSize = window.innerHeight / 7;
     cardScale = cardSize / 420;
@@ -20,6 +24,8 @@ function startCanvas(decks, deckNums, deckNum, allyDeckNum, usernames) {
     grid = 10;
     screenRatio = 2;
 
+    cardCountTexts = {};
+    cardCount = _cardCount;
     deckNumber = deckNum;
     deckNumbers = deckNums;
     if (allyDeckNum !== null)
@@ -68,15 +74,15 @@ function addBackground() {
         top: 0,
         //width: window.innerHeight * screenRatio,
         width: window.innerWidth,
-        height: handHeight,
+        height: handHeight + 15,
         fill: '#cccccc'
     });
     const rect3 = new fabric.Rect({
         left: 0,
-        top: window.innerHeight - handHeight,
+        top: window.innerHeight - handHeight - 15,
         //width: window.innerHeight * screenRatio,
         width: window.innerWidth,
-        height: handHeight,
+        height: handHeight + 15,
         fill: '#cccccc'
     });
     var group = new fabric.Group([ rect1, rect2, rect3 ], { left: 0, top: 0 });
@@ -85,36 +91,66 @@ function addBackground() {
 
 function addTokens(token, top, left) {
     let tokens;
+    let keys = [];
     if (token) {
         tokens = [token];
     } else {
         tokens = ['amber','strength','dmg1','dmg3','dmg5','enrage','protect','stun'];
+        keys = ['forged-blue','forged-yellow','forged-red'];
     }
 
     let i = 0;
+    let j = 0;
+
     tokens.forEach(token => {
-        let _top;
-        if (!top)
-            _top = (window.innerHeight / 2) - ((tokens.length - 1) * cardSize / 8) + i;
+
+        let top1, left1;
+        if (!top) {
+            top1 = (window.innerHeight / 2) - ((tokens.length - 1) * cardSize / 8) + i;
+            left1 = cardSize / 4;
+        }
+        
         fabric.Image.fromURL('img/tokens/' + token + '.png', function(img) {
-            img.scale(cardScale * 3 / 2);
-            img.token = token;
-            img.tokenGenerator = true;
-            img.top = top;
-            if (left && top) {
-                img.left = left;
-            } else {
-                img.left = cardSize / 4;
-                img.top = _top;
-            }
-            img.originX = 'center';
-            img.originY = 'center';
-            img.hasControls = img.hasBorders = false;
-            canvas.add(img);
-            canvas.sendToBack(img);
+
+            _addTokens(token, img, top, left, top1, left1);
         });
         i += cardSize / 4;
     });
+
+    keys.forEach(token => {
+        
+        let top1, left1;
+        if (!top) {
+            top1 = (window.innerHeight / 2) - ((keys.length - 1) * cardSize / 5) + j;
+            left1 = window.innerWidth - (cardSize / 4);
+        }
+        
+        fabric.Image.fromURL('img/tokens/' + token + '.png', function(img) {
+
+            _addTokens(token, img, top, left, top1, left1);
+        });
+        j += cardSize / 2.5;
+    });
+}
+
+function _addTokens(token, img, top, left, _top, _left) {
+
+    img.scale(cardScale * 3 / 2);
+
+    img.token = token;
+    img.tokenGenerator = true;
+    if (left && top) {
+        img.top = top;
+        img.left = left;
+    } else {
+        img.left = _left;
+        img.top = _top;
+    }
+    img.originX = 'center';
+    img.originY = 'center';
+    img.hasControls = img.hasBorders = false;
+    canvas.add(img);
+    canvas.sendToBack(img);
 }
 
 function listenCanvas() {
@@ -270,10 +306,15 @@ function objectClicked(options) {
 
     } else if (options.target.deck) {
         const deckCard = options.target;
-        addDeck(deckCard.deck, deckCard.top, deckCard.left);
+
+        updateCardCount(deckCard.deck);
+
+        if (cardCount[deckCard.deck] > 0) {
+            addDeck(deckCard.deck, deckCard.top, deckCard.left);
+        }
         socket.emit('draw', deckCard.deck);
         deckCard.from = [deckCard.top,deckCard.left];
-        deckCard.deck = null;
+        
         canvas.bringToFront(options.target);
 
     } else if (options.target.card) {
@@ -292,6 +333,7 @@ function objectClicked(options) {
 
 // Called every time a card is drawed from the deck
 let deckPosition;
+let usernamePosition;
 function addDeck(deck, top, left, _deckNumber, username) {
     
     fabric.Image.fromURL('img/cards/back.png', function(img) {
@@ -309,16 +351,28 @@ function addDeck(deck, top, left, _deckNumber, username) {
             img.left = deckPosition[_deckNumber][0];
             img.top = deckPosition[_deckNumber][1];
             
-            /*
-            const textbox = new fabric.Textbox(username, {
-                left: img.left,
-                top: img.top,
+            const originX = ['left', 'right'][_deckNumber < 2 ? 0 : 1];
+
+            const usernameText = new fabric.Text(username, {
+                left: usernamePosition[_deckNumber][0],
+                top: usernamePosition[_deckNumber][1],
+                fontFamily: 'sans-serif',
+                originX: originX,
                 evented: false,
-                width: 150,
-                fontSize: 16
+                fontSize: 15
             });
-            canvas.add(textbox);
-            */
+            canvas.add(usernameText);
+
+            cardCountTexts[deck] = new fabric.Text(cardCount[deck].toString(), {
+                left: deckPosition[_deckNumber][0],
+                top: deckPosition[_deckNumber][1],
+                originX: 'center',
+                originY: 'center',
+                fontFamily: 'sans-serif',
+                evented: false,
+                fontSize: 30
+            });
+            canvas.add(cardCountTexts[deck]);
 
         }
         img.originX = 'center';
@@ -333,14 +387,20 @@ function addDeck(deck, top, left, _deckNumber, username) {
 function initDeckPosition(img) {
 
     const offset = cardSize / 8;
-    const x = [ offset + 300 * cardScale / 2, window.innerWidth - (offset + 300 * cardScale / 2) ];
+    const x = [ offset + 300 * cardScale / 2, window.innerWidth - (offset + 300 * cardScale / 2)];
     //const x = [ offset + 300 * cardScale / 2, window.innerHeight * screenRatio - (offset + 300 * cardScale / 2) ];
-    const y = [ offset + 420 * cardScale / 2, window.innerHeight - (offset + 420 * cardScale / 2) ];
+    const y = [ offset + 420 * cardScale / 2 + 15, window.innerHeight - (offset + 420 * cardScale / 2) - 15];
     deckPosition = [
         [ x[0], y[0] ], // top left
         [ x[0], y[1] ], // bottom left
         [ x[1], y[0] ], // top right
         [ x[1], y[1] ] // bottom right
+    ];
+    usernamePosition = [
+        [ offset, 5 ], // top left
+        [ offset, window.innerHeight - 25 ], // bottom left
+        [ window.innerWidth - offset, 5 ], // top right
+        [ window.innerWidth - offset, window.innerHeight - 25 ] // bottom right
     ];
 }
 
@@ -384,8 +444,9 @@ function playObject(object) {
         // Card played
         message = {
             id: object.id,
-            object: object.toObject(['card', 'expansion', 'number', 'from'])
+            object: object.toObject(['deck', 'card', 'expansion', 'number', 'from'])
         };
+        object.deck = null;
     }
     /*
     message.object.top = coordToRatio(message.object.top, 'top');
@@ -479,7 +540,7 @@ function addObject(object) {
     canvasObjects[objectCounter] = object; // todo usare array canvas
 }
 
-function inOpponentHand(top, left) {
+function inOpponentHand(top) {
     console.log(deckNumber);
     console.log(allyDeckNumber);
 
@@ -576,5 +637,17 @@ function ratioToCoord(object, objectScale) {
     if (object.from) {
         object.from[0] = object.from[0] * window.innerHeight;
         object.from[1] = object.from[1] * (window.innerWidth - width) + (width / 2);
+    }
+}
+
+function updateCardCount(deck) {
+    
+    if (cardCount[deck] > 0) {
+        cardCount[deck] -= 1;
+    }
+    if (cardCount[deck] < 1) {
+        cardCountTexts[deck].set('text', '');
+    } else {
+        cardCountTexts[deck].set('text', cardCount[deck].toString());
     }
 }

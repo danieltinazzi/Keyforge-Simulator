@@ -71,6 +71,11 @@ io.on('connection', function(socket){
             return;
         }
 
+        if (!username) {
+            callback({ success: false, message: 'Invalid username.' });
+            return;
+        }
+
         if (rooms[roomName].key !== roomKey) {
             callback({ success: false, message: 'Wrong password.' });
             return;
@@ -79,12 +84,20 @@ io.on('connection', function(socket){
         const room = rooms[roomName];
         room.started = true;
         let playerReplaced = false;
+        
+        if (username in room.usernames && Array.from(room.players.values()).includes(room.usernames[username])) {
+
+            callback({ success: false, message: 'Username already taken.' });
+            return;
+        }
 
         // Replace a disconnected player when a user joins with the same username or the same deck
         if (username in room.usernames && !Array.from(room.players.values()).includes(room.usernames[username])) {
 
             const _deckId = room.usernames[username];
             const parsedDeck = room.decks.get(_deckId);
+            deckId = _deckId;
+
             users[socket.id].deck = parsedDeck;
 
             room.players.set(socket.id, _deckId);
@@ -114,9 +127,16 @@ io.on('connection', function(socket){
         // If the user replaced a previously disconnected user
         if (playerReplaced) {
 
+            console.log('players:');
+            console.log(room.players);
+            console.log('deck:');
+            console.log(deckId);
+
             // Send the decks to the new player
             const decks = Array.from(room.players.values());
             const deckNumber = rooms[roomName].getDeckNumber(deckId);
+            console.log('deckNumber: ');
+            console.log(deckNumber);
 
             const ally = room.getAlly(deckId);
             let allyNumber = null;
@@ -128,8 +148,19 @@ io.on('connection', function(socket){
             room.usernames[username] = deckId;
             const usernamePositions = rooms[roomName].getUsernamePositions();
 
-            callback({ success: true, message: { decks: decks, deckNumbers: room.positions,
-                deckNumber: deckNumber, allyNumber : allyNumber, usernames: usernamePositions } });
+            const cardCount = {};
+            for (const id of room.decks.keys()) {
+                cardCount[id] = room.decks.get(id).size();
+            }
+
+            callback({ success: true, message: {
+                decks: decks,
+                deckNumbers: room.positions,
+                deckNumber: deckNumber,
+                cardCount: cardCount,
+                allyNumber : allyNumber,
+                usernames: usernamePositions
+            } });
 
             // Request a synchronization to one player
             for (const player of room.players.keys()) {
@@ -191,11 +222,13 @@ io.on('connection', function(socket){
         const players = rooms[roomName].players;
 
         let userId;
+
         for (const player of players.keys()) {
             if (players.get(player) === deckId) {
                 userId = player;
             }
         }
+        console.log(userId);
 
         const playerSocket = io.sockets.sockets[userId];
         playerSocket.emit('synchronizeObjects', objects);
@@ -298,11 +331,23 @@ const sendDeck = function(socket, deckUrl, team, username, callback) {
 
             const deckNumber = room.getDeckNumber(deck.id);
 
+            
             room.usernames[username] = deck.id;
             const usernamePositions = rooms[roomName].getUsernamePositions();
 
-            callback({ success: true, message: { decks: decks, deckNumbers: room.positions,
-                deckNumber: deckNumber, allyNumber: allyNumber, usernames: usernamePositions } });
+            const cardCount = {};
+            for (const id of room.decks.keys()) {
+                cardCount[id] = room.decks.get(id).size();
+            }
+
+            callback({ success: true, message: {
+                decks: decks,
+                deckNumbers: room.positions,
+                deckNumber: deckNumber,
+                cardCount: cardCount,
+                allyNumber: allyNumber,
+                usernames: usernamePositions
+            } });
 
             // Inform the players that a new player joined in
             let synchRequested = false;
@@ -313,12 +358,13 @@ const sendDeck = function(socket, deckUrl, team, username, callback) {
                 if (player !== socket.id) {
                     
                     const otherDeck = room.players.get(player);
-
+                    const cardCount = deck.size();
+                    
                     if (deck.id === room.getAlly(otherDeck)) {
-                        playerSocket.emit('newPlayer', deck.id, deckNumber, true, username);
+                        playerSocket.emit('newPlayer', deck.id, deckNumber, cardCount, true, username);
 
                     } else {
-                        playerSocket.emit('newPlayer', deck.id, deckNumber, false, username);
+                        playerSocket.emit('newPlayer', deck.id, deckNumber, cardCount, false, username);
                     }
 
                     if (!synchRequested) {
