@@ -54,12 +54,21 @@ module.exports = class Deck {
         shuffleArray(this.deck);
     }
 
+    shuffleCards(cardList) {
+        cardList.forEach(card => {
+            console.log(card);
+            this.deck.push(card);
+        });
+        shuffleArray(this.deck);
+    }
+
     draw() {
         let card;
         if (this.size() == 0) {
             this.shuffle();
             console.log('deck shuffled');
         } else {
+            console.log(this.deck);
             const card_id = this.deck.pop();
             card = this.cards[card_id];
         }

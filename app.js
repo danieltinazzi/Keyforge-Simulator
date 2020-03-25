@@ -127,16 +127,9 @@ io.on('connection', function(socket){
         // If the user replaced a previously disconnected user
         if (playerReplaced) {
 
-            console.log('players:');
-            console.log(room.players);
-            console.log('deck:');
-            console.log(deckId);
-
             // Send the decks to the new player
             const decks = Array.from(room.players.values());
             const deckNumber = rooms[roomName].getDeckNumber(deckId);
-            console.log('deckNumber: ');
-            console.log(deckNumber);
 
             const ally = room.getAlly(deckId);
             let allyNumber = null;
@@ -152,6 +145,7 @@ io.on('connection', function(socket){
             for (const id of room.decks.keys()) {
                 cardCount[id] = room.decks.get(id).size();
             }
+            console.log(cardCount);
 
             callback({ success: true, message: {
                 decks: decks,
@@ -235,20 +229,33 @@ io.on('connection', function(socket){
     });
 
     // Draw a card from a deck
-    socket.on('draw', function() {
-        const deck = users[socket.id].deck;
-        
-        socket.emit('cardDrawed', deck.draw());
-        /*const roomName = users[socket.id].room;
+    socket.on('draw', function(deckId) {
+        const roomName = users[socket.id].room;
         const room = rooms[roomName];
+        const deck = room.decks.get(deckId);
+        const card = deck.draw();
+
+        socket.emit('cardDrawed', card);
+    });
+
+    socket.on('shuffleDiscards', function(deckPosition, discards) {
+        const roomName = users[socket.id].room;
+        const room = rooms[roomName];
+        let deck;
+
+        for (const deckId of Object.keys(room.positions)) {
+            if (room.positions[deckId] === deckPosition) {
+
+                deck = room.decks.get(deckId);
+                deck.shuffleCards(discards);
+            }
+        }
+
         for (const player of room.players.keys()) {
 
             const playerSocket = io.sockets.sockets[player];
-
-            if (player !== socket.id) {
-                playerSocket.emit('cardDrawed', deck.draw());
-            }
-        }*/
+            playerSocket.emit('shuffleDiscards', deckPosition, deck.size());
+        }
     });
 
     // Play a card or a new token

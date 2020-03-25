@@ -8,6 +8,7 @@ const initSocketEvents = function(socket) {
         if (isAlly) {
             allyDeckNumber = _deckNumber;
         }
+        deckNumbers[deck] = _deckNumber;
         cardCount[deck] = _cardCount;
         addDeck(deck, null, null, _deckNumber, username);
     });
@@ -18,12 +19,15 @@ const initSocketEvents = function(socket) {
         for (const objectId in canvasObjects) {
 
             const canvasObject = canvasObjects[objectId];
+
+            if (canvasObject.deck)
+                break;
             
             let object;
             if (canvasObject.token)
                 object = canvasObject.toObject(['token', 'from']);
             else
-                object = canvasObject.toObject(['card', 'expansion', 'number', 'from'])
+                object = canvasObject.toObject(['cardId', 'card', 'expansion', 'number', 'from', 'discard'])
 
             //object.top = coordToRatio(object.top, 'top');
             //object.left = coordToRatio(object.left, 'left');
@@ -44,12 +48,6 @@ const initSocketEvents = function(socket) {
 
             const object = objects[objectId];
             
-            /*
-            object.top = ratioToCoord(object.top, 'top');
-            object.left = ratioToCoord(object.left, 'left');
-            object.from[0] = ratioToCoord(object.from[0], 'top');
-            object.from[1] = ratioToCoord(object.from[1], 'left');*/
-
             if (object.token) {
                 ratioToCoord(object, tokenScale);
     
@@ -67,8 +65,18 @@ const initSocketEvents = function(socket) {
                 img.hasControls = img.hasBorders = false;
                 if (!object.token) {
                     img.expansion = object.expansion;
+                    img.cardId = object.cardId;
                     img.number = object.number;
                     img.card = object.card;
+
+                    if (object.discard !== null) {
+                        img.discard = object.discard;
+                        if (!discardPosition) {
+                            initDeckPosition();
+                        }
+                        img.left = discardPosition[object.discard][0];
+                        img.top = discardPosition[object.discard][1];
+                    }
                 } else {
                     img.token = object.token;
                 }
@@ -77,7 +85,8 @@ const initSocketEvents = function(socket) {
                 objectCounter = objectId;
                 canvasObjects[objectId] = img;
                 canvas.add(img);
-                addCardChild(objectId);
+                if (object.token)
+                    addCardChild(objectId);
                 img.setCoords();
             });
         }
@@ -85,11 +94,7 @@ const initSocketEvents = function(socket) {
     });
 
     socket.on('objectPlayed', function(message) {
-        /*
-        message.object.top = ratioToCoord(message.object.top, 'top');
-        message.object.left = ratioToCoord(message.object.left, 'left');
-        message.object.from[0] = ratioToCoord(message.object.from[0], 'top');
-        message.object.from[1] = ratioToCoord(message.object.from[1], 'left');*/
+        
         if (message.object.token) {
             ratioToCoord(message.object, tokenScale);
 
@@ -98,6 +103,9 @@ const initSocketEvents = function(socket) {
 
             const deck = message.object.deck;
             updateCardCount(deck);
+            if (cardCount[deck] < 1) {
+                canvas.remove(decks[deck]);
+            }
             message.object.deck = null;
 
             if (inOpponentHand(message.object.top, message.object.left))
@@ -113,12 +121,23 @@ const initSocketEvents = function(socket) {
                 img.expansion = message.object.expansion;
                 img.number = message.object.number;
                 img.card = message.object.card;
+                img.cardId = message.object.cardId;
             } else {
                 img.token = message.object.token;
             }
             adjustScale(img);
-            const top = img.top;
-            const left = img.left;
+            let top = img.top;
+            let left = img.left;
+
+            if (!img.token && message.object.discard !== null) {
+                img.discard = message.object.discard;
+                if (!discardPosition) {
+                    initDeckPosition();
+                }
+                left = discardPosition[message.object.discard][0];
+                top = discardPosition[message.object.discard][1];
+            }
+
             img.top = message.object.from[0];
             img.left = message.object.from[1];
 
@@ -142,6 +161,18 @@ const initSocketEvents = function(socket) {
             tapCard(object);
         }
         if (message.top && message.left) {
+            
+            object.discard = null;
+            
+            if (!object.token && message.discard !== null) {
+                object.discard = message.discard;
+                if (!discardPosition) {
+                    initDeckPosition();
+                }
+                message.left = discardPosition[message.discard][0];
+                message.top = discardPosition[message.discard][1];
+            }
+
             animateObject(object, message.top, message.left);
             
             if (!object.tokenGenerator && !object.token) { // todo use updateCardImage
@@ -168,8 +199,14 @@ const initSocketEvents = function(socket) {
     socket.on('cardDrawed', function(card) { // todo remove?
         const img = canvas.getActiveObject();
         //const src = 'img/cards/' + card.set + '/' + card.number + '.png';
+        console.log(card.id);
+        img.cardId = card.id;
         img.expansion = card.set;
         img.number = card.number;
+    });
+
+    socket.on('shuffleDiscards', function(deckPosition, count) {
+        shuffleDiscards(deckPosition, count);
     });
 
 }

@@ -13,9 +13,11 @@ let screenRatio;
 let cardCountTexts;
 let cardCount;
 
-function startCanvas(decks, deckNums, deckNum, _cardCount, allyDeckNum, usernames) {
+const decks = {};
 
+function startCanvas(decks, deckNums, deckNum, _cardCount, allyDeckNum, usernames) {
     console.log(_cardCount);
+
     numberOfPlayers = 0;
     cardSize = window.innerHeight / 7;
     cardScale = cardSize / 420;
@@ -50,7 +52,6 @@ function initCanvas() {
     const c = $('#canvas')[0];
     c.height = window.innerHeight;
     c.width = window.innerWidth;
-    //c.width = window.innerHeight * screenRatio;
 
     canvas = this.__canvas = new fabric.Canvas('canvas', {
         hoverCursor: 'pointer',
@@ -64,29 +65,33 @@ function addBackground() {
     const rect1 = new fabric.Rect({
         left: 0,
         top: 0,
-        //width: window.innerHeight * screenRatio,
         width: window.innerWidth,
         height: window.innerHeight,
         fill: '#f6f6f6'
     });
+
     const rect2 = new fabric.Rect({
-        left: 0,
-        top: 0,
-        //width: window.innerHeight * screenRatio,
-        width: window.innerWidth,
-        height: handHeight + 15,
+        left: window.innerWidth / 6,
+        //left: cardScale * 300 + cardSize / 4,
+        top: handHeight + 10,
+        //width: window.innerWidth - cardScale * 300 * 2 - cardSize / 2,
+        width: window.innerWidth * 2 / 3,
+        height: 5,
         fill: '#cccccc'
     });
     const rect3 = new fabric.Rect({
-        left: 0,
-        top: window.innerHeight - handHeight - 15,
-        //width: window.innerHeight * screenRatio,
-        width: window.innerWidth,
-        height: handHeight + 15,
+        left: window.innerWidth / 6,
+        //left: cardScale * 300 + cardSize / 4,
+        top: window.innerHeight - (handHeight + 15),
+        //width: window.innerWidth - cardScale * 300 * 2 - cardSize / 2,
+        width: window.innerWidth * 2 / 3,
+        height: 5,
         fill: '#cccccc'
     });
-    var group = new fabric.Group([ rect1, rect2, rect3 ], { left: 0, top: 0 });
+
+    const group = new fabric.Group([ rect1, rect2, rect3 ], { left: 0, top: 0 });
     canvas.setBackgroundImage(group);
+    //canvas.setBackgroundImage(rect1);
 }
 
 function addTokens(token, top, left) {
@@ -95,19 +100,22 @@ function addTokens(token, top, left) {
     if (token) {
         tokens = [token];
     } else {
-        tokens = ['amber','strength','dmg1','dmg3','dmg5','enrage','protect','stun'];
+        tokens = ['strength', 'enrage', 'protect', 'stun', 'amber', 'dmg1','dmg3','dmg5'];
+        //tokens = ['amber','strength','dmg1','dmg3','dmg5','enrage','protect','stun'];
         keys = ['forged-blue','forged-yellow','forged-red'];
     }
 
     let i = 0;
     let j = 0;
+    let k = 0;
 
-    tokens.forEach(token => {
-
+    tokens.forEach((token, index) => {
         let top1, left1;
+
         if (!top) {
-            top1 = (window.innerHeight / 2) - ((tokens.length - 1) * cardSize / 8) + i;
-            left1 = cardSize / 4;
+            console.log(i);
+            top1 = (window.innerHeight / 2) - ((tokens.length / 2 - 1) * cardSize / 8) + i;
+            left1 = cardSize / 4 + k;
         }
         
         fabric.Image.fromURL('img/tokens/' + token + '.png', function(img) {
@@ -115,6 +123,11 @@ function addTokens(token, top, left) {
             _addTokens(token, img, top, left, top1, left1);
         });
         i += cardSize / 4;
+
+        if (index == Math.floor(tokens.length / 2) - 1) {
+            i = 0;
+            k = cardSize / 4;
+        }
     });
 
     keys.forEach(token => {
@@ -122,7 +135,7 @@ function addTokens(token, top, left) {
         let top1, left1;
         if (!top) {
             top1 = (window.innerHeight / 2) - ((keys.length - 1) * cardSize / 5) + j;
-            left1 = window.innerWidth - (cardSize / 4);
+            left1 = window.innerWidth - (cardSize / 10 * 3);
         }
         
         fabric.Image.fromURL('img/tokens/' + token + '.png', function(img) {
@@ -157,7 +170,7 @@ function listenCanvas() {
     let oldPosition;
     canvas.on({
         'mouse:down': function(options) {
-            var evt = options.e;
+            const evt = options.e;
             if (options.target) {
                 oldPosition = [options.target.top, options.target.left];
             } else {
@@ -180,7 +193,7 @@ function listenCanvas() {
             zoomViewport(options);
         },
         'mouse:dblclick': function(options) {
-            if (options.target) {
+            if (options.target && !options.target.shuffle) {
                 if (options.target.token) {
                     socket.emit('tokenRemoved', options.target.id);
                     canvas.remove(options.target);
@@ -202,6 +215,7 @@ function listenCanvas() {
             objectClicked(options);
         },
         'object:moved': function(options) {
+            checkDiscards(options.target);
             if (!options.target.id) {
                 playObject(options.target);
             } else {
@@ -222,11 +236,11 @@ function listenCanvas() {
 }
 
 function panViewport(options) {
-    var e = options.e;
-    var vpt = canvas.viewportTransform;
-    var zoom = canvas.getZoom();
-    vpt[4] += e.clientX - canvas.lastPosX;
-    vpt[5] += e.clientY - canvas.lastPosY;
+    const e = options.e;
+    const vpt = canvas.viewportTransform;
+    const zoom = canvas.getZoom();
+    vpt[4] += (e.clientX - canvas.lastPosX) * 2;
+    vpt[5] += (e.clientY - canvas.lastPosY) * 2;
     canvas.lastPosX = e.clientX;
     canvas.lastPosY = e.clientY;
 
@@ -235,17 +249,6 @@ function panViewport(options) {
     } else if (vpt[4] < canvas.getWidth() - window.innerWidth * zoom) {
         vpt[4] = canvas.getWidth() - window.innerWidth * zoom;
     }
-
-    /*
-    if (vpt[4] >= 0) {
-        vpt[4] = 0;
-    } else if (vpt[4] < canvas.getWidth() - window.innerHeight * screenRatio * zoom) {
-        if (canvas.getWidth() - window.innerHeight * screenRatio * zoom < 0)
-            vpt[4] = canvas.getWidth() - window.innerHeight * screenRatio * zoom;
-        else
-            vpt[4] = 0;
-    }
-    */
 
     if (vpt[5] >= 0) {
         vpt[5] = 0;
@@ -258,33 +261,22 @@ function panViewport(options) {
 }
 
 function zoomViewport(options) {
-    var delta = options.e.deltaY * -1;
-    var zoom = canvas.getZoom();
+    const delta = options.e.deltaY * -1;
+    let zoom = canvas.getZoom();
     zoom = zoom + (delta / 10 - delta / zoom / 14);
-    //zoom = zoom + delta / 20;
+
     if (zoom > 6) zoom = 6;
     if (zoom < 1) zoom = 1;
     canvas.zoomToPoint({ x: options.e.offsetX, y: options.e.offsetY }, zoom);
     options.e.preventDefault();
     options.e.stopPropagation();
-    var vpt = canvas.viewportTransform;
+    const vpt = canvas.viewportTransform;
     
     if (vpt[4] >= 0) {
         vpt[4] = 0;
     } else if (vpt[4] < canvas.getWidth() - window.innerWidth * zoom) {
         vpt[4] = canvas.getWidth() - window.innerWidth * zoom;
     }
-
-    /*
-    if (vpt[4] >= 0) {
-        vpt[4] = 0;
-    } else if (vpt[4] < canvas.getWidth() - window.innerHeight * screenRatio * zoom) {
-        if (canvas.getWidth() - window.innerHeight * screenRatio * zoom < 0)
-            vpt[4] = canvas.getWidth() - window.innerHeight * screenRatio * zoom;
-        else
-            vpt[4] = 0;
-    }
-    */
 
     if (vpt[5] >= 0) {
         vpt[5] = 0;
@@ -297,7 +289,23 @@ function zoomViewport(options) {
 }
 
 function objectClicked(options) {
-    if (options.target.tokenGenerator) {
+
+    if (options.target.shuffle || options.target.shuffle === 0) {
+        const deckPosition = options.target.shuffle;
+
+        const discards = [];
+        canvas.forEachObject(function(obj) {
+            if (deckPosition === obj.discard) {
+                console.log(obj.cardId);
+                discards.push(obj.cardId);
+            }
+        });
+        console.log(discards);
+        
+        socket.emit('shuffleDiscards', deckPosition, discards);
+
+    } else if (options.target.tokenGenerator) {
+
         const token = options.target;
         addTokens(token.token, token.top, token.left);
         token.from = [token.top,token.left];
@@ -308,7 +316,6 @@ function objectClicked(options) {
         const deckCard = options.target;
 
         updateCardCount(deckCard.deck);
-
         if (cardCount[deckCard.deck] > 0) {
             addDeck(deckCard.deck, deckCard.top, deckCard.left);
         }
@@ -334,7 +341,13 @@ function objectClicked(options) {
 // Called every time a card is drawed from the deck
 let deckPosition;
 let usernamePosition;
+let discardPosition;
+let shufflePosition;
 function addDeck(deck, top, left, _deckNumber, username) {
+    
+    console.log('addDeck');
+    if (cardCount[deck] < 1)
+        return;
     
     fabric.Image.fromURL('img/cards/back.png', function(img) {
         img.deck = deck;
@@ -352,7 +365,7 @@ function addDeck(deck, top, left, _deckNumber, username) {
             img.top = deckPosition[_deckNumber][1];
             
             const originX = ['left', 'right'][_deckNumber < 2 ? 0 : 1];
-
+            
             const usernameText = new fabric.Text(username, {
                 left: usernamePosition[_deckNumber][0],
                 top: usernamePosition[_deckNumber][1],
@@ -374,11 +387,50 @@ function addDeck(deck, top, left, _deckNumber, username) {
             });
             canvas.add(cardCountTexts[deck]);
 
+            fabric.Image.fromURL('img/shuffle.png', function(_img) {
+                _img.left = shufflePosition[_deckNumber][0];
+                _img.top = shufflePosition[_deckNumber][1];
+                _img.originX = 'center';
+                _img.originY = 'center';
+                _img.scale(0.08);
+                _img.shuffle = _deckNumber;
+                _img.hasControls = _img.hasBorders = false;
+                _img.lockMovementX = true;
+                _img.lockMovementY = true;
+                canvas.add(_img);
+            });
+            
+            /*
+            const shuffleText = new fabric.Text('Shuffle', {
+                left: shufflePosition[_deckNumber][0],
+                top: shufflePosition[_deckNumber][1],
+                originX: 'center',
+                originY: 'center',
+                fontFamily: 'sans-serif',
+                evented: false,
+                fontSize: 15
+            });
+            canvas.add(shuffleText);
+            */
+
+            const discardsRect = new fabric.Rect({
+                originX: 'center',
+                originY: 'center',
+                left: discardPosition[_deckNumber][0],
+                top: discardPosition[_deckNumber][1],
+                width: 300 * cardScale,
+                height: 420 * cardScale,
+                fill: '#cccccc'
+            });
+            const group = new fabric.Group([ canvas.backgroundImage, discardsRect ], { left: 0, top: 0 });
+            canvas.setBackgroundImage(group);
+
         }
         img.originX = 'center';
         img.originY = 'center';
         img.hasControls = img.hasBorders = false;
         canvas.add(img);
+        decks[deck] = img;
         canvas.sendToBack(img);
         canvas.requestRenderAll();
     });
@@ -401,6 +453,26 @@ function initDeckPosition(img) {
         [ offset, window.innerHeight - 25 ], // bottom left
         [ window.innerWidth - offset, 5 ], // top right
         [ window.innerWidth - offset, window.innerHeight - 25 ] // bottom right
+    ];
+    discardPosition = [
+        [ x[0], y[0] + (420 * cardScale + offset * 2) ],
+        [ x[0], y[1] - (420 * cardScale + offset * 2) ],
+        [ x[1], y[0] + (420 * cardScale + offset * 2) ],
+        [ x[1], y[1] - (420 * cardScale + offset * 2) ]
+    ];
+    /*
+    shufflePosition = [
+        [ x[0], y[0] + (420 * 3/2 * cardScale + offset * 3) ],
+        [ x[0], y[1] - (420 * 3/2 * cardScale + offset * 3) ],
+        [ x[1], y[0] + (420 * 3/2 * cardScale + offset * 3) ],
+        [ x[1], y[1] - (420 * 3/2 * cardScale + offset * 3) ]
+    ];
+    */
+   shufflePosition = [
+        [ x[0], y[0] + (420 * 1/2 * cardScale + offset) ],
+        [ x[0], y[1] - (420 * 1/2 * cardScale + offset) ],
+        [ x[1], y[0] + (420 * 1/2 * cardScale + offset) ],
+        [ x[1], y[1] - (420 * 1/2 * cardScale + offset) ]
     ];
 }
 
@@ -444,16 +516,10 @@ function playObject(object) {
         // Card played
         message = {
             id: object.id,
-            object: object.toObject(['deck', 'card', 'expansion', 'number', 'from'])
+            object: object.toObject(['deck', 'card', 'cardId', 'expansion', 'number', 'from', 'discard'])
         };
         object.deck = null;
     }
-    /*
-    message.object.top = coordToRatio(message.object.top, 'top');
-    message.object.left = coordToRatio(message.object.left, 'left');
-    message.object.from[0] = coordToRatio(message.object.from[0], 'top');
-    message.object.from[1] = coordToRatio(message.object.from[1], 'left');
-    */
 
     coordToRatio(message.object, object.scaleX);
     socket.emit('objectPlayed', message);
@@ -465,17 +531,14 @@ function playObject(object) {
 function moveObject(object) {
 
     coordToRatio(object, object.scaleX);
-    /*
-    let message = {
-        objectId: object.id,
-        objectTop: coordToRatio(object.top, 'top'),
-        objectLeft: coordToRatio(object.left, 'left')
-    };*/
+    console.log(object.discard);
+
     let message = {
         id: object.id,
         top: object.top,
         left: object.left,
-        width: object.width
+        width: object.width,
+        discard: object.discard
     };
     ratioToCoord(object, object.scaleX);
     object.setCoords();
@@ -541,8 +604,6 @@ function addObject(object) {
 }
 
 function inOpponentHand(top) {
-    console.log(deckNumber);
-    console.log(allyDeckNumber);
 
     if (!deckPosition) {
         initDeckPosition();
@@ -594,28 +655,6 @@ function adjustScale(object) {
     }
 }
 
-/*
-function coordToRatio(x, coord) {
-    const cardWidth = cardSize * 5 / 7;
-    console.log(cardSize);
-    if (coord === 'top')
-        return x / window.innerHeight;
-    else
-        //return (x / window.innerWidth) * window.innerHeight * screenRatio
-        return (x - cardWidth / 2) / (window.innerWidth - cardWidth);
-}
-
-function ratioToCoord(x, coord) {
-    const cardWidth = cardSize * 5 / 7;
-    console.log(cardSize);
-    if (coord === 'top')
-        return x * window.innerHeight;
-    else
-        //return (x / (window.innerHeight * screenRatio)) * window.innerWidth;
-        return x * (window.innerWidth - cardWidth) + (cardWidth / 2);
-}
-*/
-
 function coordToRatio(object, objectScale) {
     const width = object.width * objectScale;
 
@@ -650,4 +689,59 @@ function updateCardCount(deck) {
     } else {
         cardCountTexts[deck].set('text', cardCount[deck].toString());
     }
+}
+
+function checkDiscards(object) {
+
+    if (!discardPosition) {
+        initDeckPosition();
+    }
+
+    const top = object.top;
+    const left = object.left;
+
+    let i = 0;
+    const range = cardScale * 200;
+
+    object.discard = null;
+    discardPosition.forEach(function(discard) {
+
+        if (Math.abs(discard[0] - left) < range && Math.abs(discard[1] - top) < range) {
+
+            object.left = discard[0];
+            object.top = discard[1];
+            object.setCoords();
+            object.discard = i;
+            return;
+        }
+        i += 1;
+    });
+}
+
+function shuffleDiscards(_deckPosition, count) {
+
+    const discards = [];
+    canvas.forEachObject(function(obj) {
+        if (_deckPosition === obj.discard) {
+            discards.push(obj);
+            delete canvasObjects[obj.id];
+            canvas.remove(obj);
+        }
+    });
+    let deckId;
+    
+    for (const id of Object.keys(deckNumbers)) {
+        if (deckNumbers[id] === _deckPosition) {
+            deckId = id;
+            break;
+        }
+    }
+
+    const oldCount = cardCount[deckId];
+    cardCount[deckId] = count;
+    cardCountTexts[deckId].set('text', '' + count);
+
+    if (oldCount == 0)
+        addDeck(deckId, deckPosition[_deckPosition][1], deckPosition[_deckPosition][0]);
+    canvas.renderAll();
 }
