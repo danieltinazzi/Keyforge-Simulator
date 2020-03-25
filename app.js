@@ -384,7 +384,7 @@ const sendDeck = function(socket, deckUrl, team, username, callback) {
     });
 }
 
-
-http.listen(3000, function(){
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, function(){
     console.log('Listening on *:3000');
 });
