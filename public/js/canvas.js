@@ -571,6 +571,16 @@ function addCardChild(child) {
     });
 }
 
+function synchCardChild(card) {
+    card.childs = new Set();
+    canvas.forEachObject(function(obj) {
+        if (obj.token && obj.intersectsWithObject(card)) {
+            card.childs.add(obj);
+            canvas.bringToFront(obj);
+        }
+    });
+}
+
 function removeCardChild(child) {
     canvas.forEachObject(function(obj) {
         if (obj.id !== child && obj.card) {

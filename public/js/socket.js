@@ -85,12 +85,17 @@ const initSocketEvents = function(socket) {
                 objectCounter = objectId;
                 canvasObjects[objectId] = img;
                 canvas.add(img);
-                if (object.token)
+                if (object.token) {
                     addCardChild(objectId);
+                    canvas.bringToFront(img);
+                } else {
+                    synchCardChild(img);
+                }
                 img.setCoords();
+                canvas.requestRenderAll();
             });
         }
-        canvas.renderAll();
+        //canvas.renderAll();
     });
 
     socket.on('objectPlayed', function(message) {
