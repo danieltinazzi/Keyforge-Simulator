@@ -4,6 +4,10 @@
 Inspired by *Tabletop Simulator*, this project takes a **sandbox approach** — players can freely move, arrange, and interact with every element on the board.  
 It supports **1v1** and **2v2 multiplayer modes**.
 
+<p>
+  <img src="screenshots/3.png" width="60%" alt="KeyForge Sandbox">
+</p>
+
 ---
 
 ## ⚙️ Key Technologies
@@ -43,21 +47,6 @@ It supports **1v1** and **2v2 multiplayer modes**.
    ```
 
 ---
-## Screenshots
-
-<p>
-  <img src="screenshot/1.png" width="80%" alt="KeyForge Sandbox screenshot 1">
-</p>
-
-<p>
-  <img src="screenshot/2.png" width="80%" alt="KeyForge Sandbox screenshot 2">
-</p>
-
-<p>
-  <img src="screenshot/3.png" width="80%" alt="KeyForge Sandbox screenshot 3">
-</p>
-
----
 
 ## 💬 Contributing
 
@@ -70,6 +59,19 @@ Feedback, ideas, and improvements are always welcome!
 - This project is a fan-made, non-commercial implementation of KeyForge and is not affiliated with Fantasy Flight Games, Ghost Galaxy, or Richard Garfield.  
 - Original game: *KeyForge* by **Richard Garfield**  
 - Python card downloader: Modified from [Tyrox1 / Keyforge-Downloader](https://github.com/Tyrox1/Keyforge-Downloader)  
+
+---
+
+## Screenshots
+
+<p>
+  <img src="screenshots/1.png" width="30%" alt="KeyForge Sandbox screenshot 1">
+  <img src="screenshots/2.png" width="30%" alt="KeyForge Sandbox screenshot 2">
+</p>
+
+<p>
+  <img src="screenshots/3.png" width="60%" alt="KeyForge Sandbox screenshot 3">
+</p>
 
 ---
 
