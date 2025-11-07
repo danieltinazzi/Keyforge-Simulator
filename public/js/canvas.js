@@ -62,15 +62,8 @@ function initCanvas() {
 }
 
 function addBackground() {
-    const rect1 = new fabric.Rect({
-        left: 0,
-        top: 0,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        fill: '#f6f6f6'
-    });
-
-    const rect2 = new fabric.Rect({
+    
+    const rectTop = new fabric.Rect({
         left: window.innerWidth / 6,
         //left: cardScale * 300 + cardSize / 4,
         top: handHeight + 10,
@@ -79,7 +72,7 @@ function addBackground() {
         height: 5,
         fill: '#cccccc'
     });
-    const rect3 = new fabric.Rect({
+    const rectBottom = new fabric.Rect({
         left: window.innerWidth / 6,
         //left: cardScale * 300 + cardSize / 4,
         top: window.innerHeight - (handHeight + 15),
@@ -89,9 +82,20 @@ function addBackground() {
         fill: '#cccccc'
     });
 
-    const group = new fabric.Group([ rect1, rect2, rect3 ], { left: 0, top: 0 });
-    canvas.setBackgroundImage(group);
-    //canvas.setBackgroundImage(rect1);
+    fabric.Image.fromURL('img/background.jpg', function(img) {
+        const scale = Math.max(
+            window.innerWidth / img.width,
+            window.innerHeight / img.height
+        );
+        img.set({
+            left: 0,
+            top: 0,
+            scaleX: scale,
+            scaleY: scale
+        });
+        const group = new fabric.Group([ img, rectTop, rectBottom ], { left: 0, top: 0 });
+        canvas.setBackgroundImage(group);
+    });
 }
 
 function addTokens(token, top, left) {
@@ -422,9 +426,7 @@ function addDeck(deck, top, left, _deckNumber, username) {
                 height: 420 * cardScale,
                 fill: '#cccccc'
             });
-            const group = new fabric.Group([ canvas.backgroundImage, discardsRect ], { left: 0, top: 0 });
-            canvas.setBackgroundImage(group);
-
+            canvas.add(discardsRect);
         }
         img.originX = 'center';
         img.originY = 'center';

@@ -16,15 +16,14 @@ It supports **1v1** and **2v2 multiplayer modes**.
 
 ## 🚀 Installation & Setup
 
-1. **Download the cards images**  
+1. **Download the official assets**  
    The downloader tool will retrieve the card images directly from the official website.
 
    ```bash
    $ python downloader.py
    ```
 
-2. **Verify** that all cards are downloaded correctly,  
-   especially the third expansion, which includes *anomalies* (rare unplayable cards from future sets).
+2. **Verify** that all cards are downloaded correctly.
 
 3. **Copy** the card folders (i.e. `341`, `435`, `452`) into:  
    ```
@@ -46,15 +45,19 @@ It supports **1v1** and **2v2 multiplayer modes**.
 ## Screenshots
 
 <p>
-  <img src="screenshot/1.png" width="80%" alt="KeyForge Sandbox screenshot 1">
+  <img src="screenshot/1.png" width="80%" alt="Lobby">
 </p>
 
 <p>
-  <img src="screenshot/2.png" width="80%" alt="KeyForge Sandbox screenshot 2">
+  <img src="screenshot/2.png" width="80%" alt="Join game">
 </p>
 
 <p>
-  <img src="screenshot/3.png" width="80%" alt="KeyForge Sandbox screenshot 3">
+  <img src="screenshot/3.png" width="80%" alt="Game screen">
+</p>
+
+<p>
+  <img src="screenshot/4.png" width="80%" alt="Zoom feature">
 </p>
 
 ---
