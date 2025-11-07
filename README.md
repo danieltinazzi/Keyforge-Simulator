@@ -1,7 +1,7 @@
 # KeyForge Sandbox
 
 **KeyForge Sandbox** is an unofficial digital adaptation of the card game *KeyForge*, designed by **Richard Garfield**.  
-Inspired by *Tabletop Simulator*, this project takes a **sandbox approach** — players can freely move, arrange, and interact with every element on the board.  
+Inspired by *Tabletop Simulator*, this project takes a **sandbox approach**: players can freely move, arrange, and interact with every element on the board.  
 It supports **1v1** and **2v2 multiplayer modes**.
 
 <p>
