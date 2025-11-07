@@ -46,25 +46,6 @@ It supports **1v1** and **2v2 multiplayer modes**.
    ```
 
 ---
-## Screenshots
-
-<p>
-  <img src="screenshot/1.png" width="80%" alt="Lobby">
-</p>
-
-<p>
-  <img src="screenshot/2.png" width="80%" alt="Join game">
-</p>
-
-<p>
-  <img src="screenshot/3.png" width="80%" alt="Game screen">
-</p>
-
-<p>
-  <img src="screenshot/4.png" width="80%" alt="Zoom feature">
-</p>
-
----
 
 ## 💬 Contributing
 
@@ -83,12 +64,16 @@ Feedback, ideas, and improvements are always welcome!
 ## Screenshots
 
 <p>
-  <img src="screenshots/1.png" width="30%" alt="KeyForge Sandbox screenshot 1">
-  <img src="screenshots/2.png" width="30%" alt="KeyForge Sandbox screenshot 2">
+  <img src="screenshots/1.png" width="30%" alt="Lobby">
+  <img src="screenshots/2.png" width="30%" alt="Join game">
 </p>
 
 <p>
-  <img src="screenshots/3.png" width="60%" alt="KeyForge Sandbox screenshot 3">
+  <img src="screenshots/3.png" width="60%" alt="Game screen">
+</p>
+
+<p>
+  <img src="screenshots/4.png" width="60%" alt="Zoom feature">
 </p>
 
 ---
